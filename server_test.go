@@ -1,55 +1,49 @@
-package main_test
+package main
 
 import (
-	"log"
+	"context"
+	"fmt"
 	"net"
+	"testing"
+	"testing/quick"
 
-	"golang.org/x/net/context"
+	"github.com/newtonsystems/agent-mgmt/app/tests"
+	"github.com/newtonsystems/grpc_types/go/grpc_types"
 	"google.golang.org/grpc"
-  "github.com/newtonsystems/grpc_types/go/grpc_types"
-	"google.golang.org/grpc/reflection"
-)
-
-type server struct{}
-
-const (
-	port = ":50000"
 )
 
 // TestPingMessage tests response back from Ping method
-func TestPingMessage(t *testing.T) {
-  // Check port
-  ln, err := net.Listen("tcp", hostPort)
-  if err != nil {
-    t.Error(err)
-    t.FailNow()
-  }
+func TestPingSaneMessage(t *testing.T) {
+	// Check port
+	ln, errLn := net.Listen("tcp", grpcPort)
+	if errLn != nil {
+		t.Error(errLn)
+		t.FailNow()
+	}
 
-  // Connection to grpc server
-  s := grpc.NewServer()
-	pb.RegisterPingServer(s, &server{})
-  defer s.GracefulStop()
-  go s.Serve(ln)
-  defer s.GracefulStop()
+	// Connection to grpc server
+	s := grpc.NewServer()
+	grpc_types.RegisterPingServer(s, &Server{})
+	go s.Serve(ln)
+	defer s.GracefulStop()
 
-  // Connect via client
-  conn, err := grpc.Dial(hostPort, grpc.WithInsecure())
-  defer conn.Close()
-  if err != nil {
-    t.Fatalf("unable to Dial: %+v", err)
-    t.FailNow()
-  }
+	// Connect via client
+	conn, errDial := grpc.Dial(grpcPort, grpc.WithInsecure())
+	defer conn.Close()
+	if errDial != nil {
+		t.Fatalf("unable to Dial: %+v", errDial)
+		t.FailNow()
+	}
 
-  client := grpc_types.NewPingClient(conn)
-
+	client := grpc_types.NewPingClient(conn)
 
 	assertion := func(message string) bool {
-		fmt.Printf("Running 'TestPingMessage' assert check: (message=%s)\n", message)
+		fmt.Printf("Running 'TestPingSaneMessage' assert check: (message=%s)\n", message)
 
-    resp, err := client.Ping(
-      context.Background(),
-      &grpc_types.PingRequest{},
-    )
+		resp, err := client.Ping(
+			context.Background(),
+			&grpc_types.PingRequest{Message: message},
+		)
 		tests.Ok(t, err)
 
 		return ("Hello " + message) == resp.Message

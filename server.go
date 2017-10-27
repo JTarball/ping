@@ -1,31 +1,33 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net"
+	"net/http"
+	"os"
+	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/term"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-  "github.com/newtonsystems/grpc_types/go/grpc_types"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/newtonsystems/grpc_types/go/grpc_types"
 )
 
 const (
-	port = ":50000"
+	grpcPort = ":50000"
+	httpPort = ":8080"
 )
 
-type server struct{}
+type Server struct{}
 
-// Ping responses with a message back and
-func (s *server) Ping(ctx context.Context, in *grpc_types.PingRequest) (*grpc_types.PingResponse, error) {
-  logger.Log("level", "info", "method", "Ping", "msg", "Received ping from service: "+ in.Name)
-	return &grpc_types.PingResponse{Message: "Hello " + in.Name}, nil
-}
+var logger = GetLogger()
 
-func main() {
-  var started := time.Now()
-  // -- Setup logging
-  // Color by level value
+// GetLogger get logger
+func GetLogger() log.Logger {
+	// Color by level value
 	colorFn := func(keyvals ...interface{}) term.FgBgColor {
 		for i := 0; i < len(keyvals)-1; i += 2 {
 			if keyvals[i] != "level" {
@@ -49,7 +51,6 @@ func main() {
 		return term.FgBgColor{}
 	}
 
-	// Logging domain.
 	var logger log.Logger
 	{
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
@@ -58,52 +59,68 @@ func main() {
 		logger = log.With(logger, "service", "ping")
 	}
 
-  logger.Log("level", "info", "msg", "starting ...")
+	return logger
+}
+
+// Ping responses with a message back and
+func (s *Server) Ping(ctx context.Context, in *grpc_types.PingRequest) (*grpc_types.PingResponse, error) {
+	logger.Log("level", "info", "method", "Ping", "msg", "Received ping from service: "+in.Message)
+	return &grpc_types.PingResponse{Message: "Hello " + in.Message}, nil
+}
+
+func main() {
+	started := time.Now()
+
+	logger.Log("level", "info", "msg", "starting ...")
 	defer logger.Log("msg", "goodbye")
 
-  // --- Probes ----------------------------------------------------------------
+	// --- Probes ----------------------------------------------------------
 
-  // Liveness probe
+	// Liveness probe
 	http.HandleFunc("/started", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		data := (time.Now().Sub(started)).String()
 		w.Write([]byte(data))
 	})
 
-  // Readiness probe
+	// Readiness probe
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		duration := time.Now().Sub(started)
 		if duration.Seconds() > 10 {
-      w.WriteHeader(200)
+			w.WriteHeader(200)
 			w.Write([]byte("ok"))
 		} else {
-      w.WriteHeader(500)
+			w.WriteHeader(500)
 			w.Write([]byte(fmt.Sprintf("error: %v", duration.Seconds())))
 		}
 	})
 
-	// --- End of Probes ---------------------------------------------------------
+	logger.Log("level", "debug", "transport", "http", "port", httpPort, "msg", "running http probe server ...")
+	go http.ListenAndServe(httpPort, nil)
 
-  // Listen on port
-	lis, err := net.Listen("tcp", port)
+	// --- End of Probes ---------------------------------------------------
+
+	// Listen on port
+	lis, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		logger.Log("level", "error", "msg","Failed to listen on port %s: %v", port, err)
-    return
+		logger.Log("level", "error", "msg", "Failed to listen on port %s: %v", grpcPort, err)
+		return
 	}
-  defer lis.Close()
+	defer lis.Close()
 
-  // Setup gRPC
+	// Setup gRPC
 	s := grpc.NewServer()
-	pb.RegisterPingServer(s, &server{})
-  defer s.GracefulStop()
+	grpc_types.RegisterPingServer(s, &Server{})
+	defer s.GracefulStop()
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
 
-  // Serve
+	// Serve
+	logger.Log("level", "debug", "transport", "http", "port", grpcPort, "msg", "running grpc server ...")
 	if err := s.Serve(lis); err != nil {
-		logger.Log("level", "error", "msg", "Failed to serve on port %s : %v", port, err)
-    return
+		logger.Log("level", "error", "msg", "Failed to serve on port %s : %v", grpcPort, err)
+		return
 	}
 
 }

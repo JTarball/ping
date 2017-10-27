@@ -118,6 +118,9 @@ build-bin:              ##@build Cross compile the go binary executable
 	docker run --rm -v "${PWD}":$(REPO_DIR) $(REPO):compile
 	@echo ""
 
-
-mkube-run-dev:
-	@echo "$(ERROR) Not implemented yet, sorry boss."
+ #
+ # Tests
+ #
+check:
+	@echo "$(INFO) Running tests"
+	go test -v .
