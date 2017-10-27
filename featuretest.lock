@@ -1,11 +1,12 @@
-hash: 1c2f04a87702164c32d1b7bc97bf8ba764df8ef1619d6aefc499f56e42545b93
-updated: 2017-10-27T20:18:08.502658+01:00
+hash: bb492ce2b070b2b0fbdcd96261b9188c8e3b796accbef2e62e851b5698ff393c
+updated: 2017-10-27T22:30:20.858277+01:00
 imports:
 - name: github.com/go-kit/kit
   version: 4dc7be5d2d12881735283bcab7352178e190fc71
   subpackages:
   - log
   - log/term
+  - metrics
 - name: github.com/go-logfmt/logfmt
   version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
 - name: github.com/go-stack/stack
@@ -22,7 +23,7 @@ imports:
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/newtonsystems/grpc_types
-  version: 82c7ce77271028643a75fbcf609d2db3fd250759
+  version: 74a560b63906c6c26b1306241240246f102e9ff1
   subpackages:
   - go/grpc_types
 - name: golang.org/x/net
@@ -67,4 +68,19 @@ imports:
   - status
   - tap
   - transport
-testImports: []
+testImports:
+- name: github.com/newtonsystems/agent-mgmt
+  version: 987b0674fa2d14d2ae96f03fe8524294572717c1
+  subpackages:
+  - app/errors
+  - app/models
+  - app/service
+  - app/tests
+  - app/utils
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram

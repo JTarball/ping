@@ -86,12 +86,12 @@ install-deps-master:
 
 update-install:
 	@echo "$(INFO) Getting packages and building alpine go binary ..."
-	@if [ "$(CURRENT_BRANCH)" != "master" && "$(CURRENT_BRANCH)" != "featuretest" ]; then \
-		echo "$(INFO) for branch master " \
+	if [[ "$(CURRENT_BRANCH)" != "master" && "$(CURRENT_BRANCH)" != "featuretest" ]]; then \
+		echo "$(INFO) for branch master "; \
 		make update-deps-master; \
 		make install-deps-master; \
 	else \
-		echo "$(INFO) for branch $(CURRENT_BRANCH) " \
+		echo "$(INFO) for branch $(CURRENT_BRANCH) "; \
 		make update-deps-$(CURRENT_BRANCH); \
 		make install-deps-$(CURRENT_BRANCH); \
 	fi
