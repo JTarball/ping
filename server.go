@@ -23,6 +23,7 @@ func (s *server) Ping(ctx context.Context, in *grpc_types.PingRequest) (*grpc_ty
 }
 
 func main() {
+  var started := time.Now()
   // -- Setup logging
   // Color by level value
 	colorFn := func(keyvals ...interface{}) term.FgBgColor {
@@ -60,7 +61,28 @@ func main() {
   logger.Log("level", "info", "msg", "starting ...")
 	defer logger.Log("msg", "goodbye")
 
-  // ---------------------------------------------------------------------------
+  // --- Probes ----------------------------------------------------------------
+
+  // Liveness probe
+	http.HandleFunc("/started", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		data := (time.Now().Sub(started)).String()
+		w.Write([]byte(data))
+	})
+
+  // Readiness probe
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		duration := time.Now().Sub(started)
+		if duration.Seconds() > 10 {
+      w.WriteHeader(200)
+			w.Write([]byte("ok"))
+		} else {
+      w.WriteHeader(500)
+			w.Write([]byte(fmt.Sprintf("error: %v", duration.Seconds())))
+		}
+	})
+
+	// --- End of Probes ---------------------------------------------------------
 
   // Listen on port
 	lis, err := net.Listen("tcp", port)
