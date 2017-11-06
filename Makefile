@@ -1,26 +1,13 @@
 #
 # Makefile
 #
-# Ping Service
-# TODO: Need some sort of generic makefile for go services
-#
 
+CURRENT_RELEASE_VERSION=0.0.1
 REPO=ping
 LOCAL_DEPLOYMENT_FILENAME=ping-deployment.yml
 #GO_MAIN=./server.go
 GO_PORT=50000
 
-
-# Repository directory inside docker container
-REPO_DIR=/go/src/github.com/newtonsystems/ping
-# Filename of k8s deployment file inside 'local' devops folder
-
-
-NEWTON_DIR=/Users/danvir/Masterbox/sideprojects/github/newtonsystems/
-CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
-CURRENT_RELEASE_VERSION=0.0.1
-
-TIMESTAMP=tmp-$(shell date +%s )
 
 #
 # Help for Makefile & Colorised Messages
@@ -58,11 +45,11 @@ HELP_FUN = \
 
 .PHONY: help
 
-help:                        ##@other Show this help.
+help:         ##@other Show this help.
 	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 
 # ------------------------------------------------------------------------------
-.PHONY: update master build-exec
+.PHONY: update master build
 
 update:       ##@build Updates dependencies for your go application
 	mkubectl.sh --update-deps
@@ -70,11 +57,8 @@ update:       ##@build Updates dependencies for your go application
 install:      ##@build Install dependencies for your go application
 	mkubectl.sh --install-deps
 
-build-bin:   ##@compile Builds executable cross compiled for alpine docker
-	@echo "$(INFO) Building a linux-alpine Go binary locally with a docker container $(BLUE)$(REPO):compile$(RESET)"
-	docker build -t $(REPO):compile -f Dockerfile.build .
-	docker run --rm -v "${PWD}":$(REPO_DIR) $(REPO):compile
-
+build:   ##@compile Builds executable cross compiled for alpine docker
+	mkubectl.sh --compile-inside-docker ping
 
 # ------------------------------------------------------------------------------
 # CircleCI support
@@ -88,21 +72,21 @@ check:        @circleci Needed for running circleci tests
 # Non docker local development (can be useful for super fast local/debugging)
 #.PHONY: run-conn-local
 
-#run-conn:
+#run-conn:              ##@dev Run locally (outside docker) (but connect to minikube linkerd etc)
 #	go run ${GO_MAIN} --conn.local
 
 # ------------------------------------------------------------------------------
 # Minikube (Normal Development)
-.PHONY: run-dev swap-local-hot-reload swap-latest swap-latest-release
+.PHONY: run swap-hot-local swap-latest swap-latest-release
 
-run-dev:                ##@dev Alias for swap-local-hot-reload
+run:                    ##@dev Alias for swap-hot-local
 	swap-hot-local
 
-swap-hot-local:         ##@dev Swaps $(REPO) deployment in minikube (You must make sure you are running i.e. infra-minikube.sh --create)
+swap-hot-local:         ##@dev Swaps $(REPO) deployment in minikube with hot-reloadable docker image (You must make sure you are running i.e. infra-minikube.sh --create)
 	mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_PORT}
 
 swap-latest:            ##@dev Swaps $(REPO) deployment in minikube with the latest image for branch from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --swap-deployment-with-latest-image
+	mkubectl.sh --swap-deployment-with-latest-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}
 
 swap-latest-release:    ##@dev Swaps $(REPO) deployment in minikube with the latest release image for from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --swap-deployment-with-latest-image
+	mkubectl.sh --swap-deployment-with-latest-release-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}
