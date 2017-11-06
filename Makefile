@@ -7,7 +7,7 @@
 
 REPO=ping
 LOCAL_DEPLOYMENT_FILENAME=ping-deployment.yml
-GO_MAIN=./server.go
+#GO_MAIN=./server.go
 GO_PORT=50000
 
 
@@ -70,7 +70,7 @@ update:       ##@build Updates dependencies for your go application
 install:      ##@build Install dependencies for your go application
 	mkubectl.sh --install-deps
 
-build-exec:   ##@compile Builds executable cross compiled for alpine docker
+build-bin:   ##@compile Builds executable cross compiled for alpine docker
 	@echo "$(INFO) Building a linux-alpine Go binary locally with a docker container $(BLUE)$(REPO):compile$(RESET)"
 	docker build -t $(REPO):compile -f Dockerfile.build .
 	docker run --rm -v "${PWD}":$(REPO_DIR) $(REPO):compile
@@ -99,7 +99,7 @@ run-dev:                ##@dev Alias for swap-local-hot-reload
 	swap-hot-local
 
 swap-hot-local:         ##@dev Swaps $(REPO) deployment in minikube (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_MAIN} ${GO_PORT}
+	mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_PORT}
 
 swap-latest:            ##@dev Swaps $(REPO) deployment in minikube with the latest image for branch from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
 	mkubectl.sh --swap-deployment-with-latest-image
