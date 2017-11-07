@@ -52,13 +52,13 @@ help:         ##@other Show this help.
 .PHONY: update master build
 
 update:       ##@build Updates dependencies for your go application
-	mkubectl.sh --update-deps
+	bash -c "mkubectl.sh --update-deps"
 
 install:      ##@build Install dependencies for your go application
-	mkubectl.sh --install-deps
+	bash -c "mkubectl.sh --install-deps"
 
-build:   ##@compile Builds executable cross compiled for alpine docker
-	mkubectl.sh --compile-inside-docker ping
+build:        ##@compile Builds executable cross compiled for alpine docker
+	bash -c "mkubectl.sh --compile-inside-docker ping"
 
 # ------------------------------------------------------------------------------
 # CircleCI support
@@ -72,7 +72,7 @@ check:        @circleci Needed for running circleci tests
 # Non docker local development (can be useful for super fast local/debugging)
 #.PHONY: run-conn-local
 
-#run-conn:              ##@dev Run locally (outside docker) (but connect to minikube linkerd etc)
+#run-conn:    ##@dev Run locally (outside docker) (but connect to minikube linkerd etc)
 #	go run ${GO_MAIN} --conn.local
 
 # ------------------------------------------------------------------------------
@@ -80,13 +80,13 @@ check:        @circleci Needed for running circleci tests
 .PHONY: run swap-hot-local swap-latest swap-latest-release
 
 run:                    ##@dev Alias for swap-hot-local
-	swap-hot-local
+	@make swap-hot-local
 
 swap-hot-local:         ##@dev Swaps $(REPO) deployment in minikube with hot-reloadable docker image (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_PORT}
+	@bash -c "mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_PORT}"
 
 swap-latest:            ##@dev Swaps $(REPO) deployment in minikube with the latest image for branch from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --swap-deployment-with-latest-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}
+	@bash -c "mkubectl.sh --swap-deployment-with-latest-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}"
 
 swap-latest-release:    ##@dev Swaps $(REPO) deployment in minikube with the latest release image for from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
-	mkubectl.sh --swap-deployment-with-latest-release-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}
+	@bash -c "mkubectl.sh --swap-deployment-with-latest-release-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${CURRENT_RELEASE_VERSION}"
