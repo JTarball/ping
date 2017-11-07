@@ -64,7 +64,7 @@ build:        ##@compile Builds executable cross compiled for alpine docker
 # CircleCI support
 .PHONY: check
 
-check:        @circleci Needed for running circleci tests
+check:        ##@circleci Needed for running circleci tests
 	@echo "$(INFO) Running tests"
 	go test -v .
 
