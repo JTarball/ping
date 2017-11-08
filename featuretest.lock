@@ -1,12 +1,18 @@
 hash: bb492ce2b070b2b0fbdcd96261b9188c8e3b796accbef2e62e851b5698ff393c
-updated: 2017-10-27T22:30:20.858277+01:00
+updated: 2017-11-08T09:07:00.738129Z
 imports:
+- name: github.com/beorn7/perks
+  version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
+  subpackages:
+  - quantile
 - name: github.com/go-kit/kit
   version: 4dc7be5d2d12881735283bcab7352178e190fc71
   subpackages:
   - log
   - log/term
   - metrics
+  - metrics/internal/lv
+  - metrics/prometheus
 - name: github.com/go-logfmt/logfmt
   version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
 - name: github.com/go-stack/stack
@@ -22,10 +28,33 @@ imports:
   - ptypes/timestamp
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
 - name: github.com/newtonsystems/grpc_types
   version: 74a560b63906c6c26b1306241240246f102e9ff1
   subpackages:
   - go/grpc_types
+- name: github.com/prometheus/client_golang
+  version: c5b7fccd204277076155f10851dad72b76a49317
+  subpackages:
+  - prometheus
+  - prometheus/promhttp
+- name: github.com/prometheus/client_model
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: 1bab55dd05dbff384524a6a1c99006d9eb5f139b
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2
+  subpackages:
+  - xfs
 - name: golang.org/x/net
   version: a04bdaca5b32abe1c069418fb7088ae607de5bd0
   subpackages:
@@ -48,7 +77,7 @@ imports:
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: 61d37c5d657a47e4404fd6823bd598341a2595de
+  version: 5ffe3083946d5603a0578721101dc8165b1d5b5f
   subpackages:
   - balancer
   - codes
