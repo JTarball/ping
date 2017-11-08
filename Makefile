@@ -1,21 +1,13 @@
 #
 # Makefile
 #
-# Ping Service
-# TODO: Need some sort of generic makefile for go services
-#
 
-REPO=ping
-# Repository directory inside docker container
-REPO_DIR=/go/src/github.com/newtonsystems/ping
-# Filename of k8s deployment file inside 'local' devops folder
-LOCAL_DEPLOYMENT_FILENAME=ping-deployment.yml
-
-NEWTON_DIR=/Users/danvir/Masterbox/sideprojects/github/newtonsystems/
-CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
 CURRENT_RELEASE_VERSION=0.0.1
+REPO=ping
+LOCAL_DEPLOYMENT_FILENAME=ping-deployment.yml
+#GO_MAIN=./server.go
+GO_PORT=50000
 
-TIMESTAMP=tmp-$(shell date +%s )
 
 #
 # Help for Makefile & Colorised Messages
@@ -53,74 +45,48 @@ HELP_FUN = \
 
 .PHONY: help
 
-help:                        ##@other Show this help.
+help:         ##@other Show this help.
 	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 
 # ------------------------------------------------------------------------------
-.PHONY: compile update-deps-featuretest update-deps-master install-deps-featuretest install-deps-master
-update-deps-featuretest:
-	rm -rf ./.glide
-	@echo "$(INFO) Updating dependencies for featuretest environment"
-	cp featuretest.lock glide.lock
-	glide -y featuretest.yaml update --force
-	cp glide.lock featuretest.lock
+.PHONY: update master build
 
-update-deps-master:
-	rm -rf ./.glide
-	@echo "$(INFO) Updating dependencies for $(BLUE)master$(RESET) environment"
-	cp master.lock glide.lock
-	glide -y master.yaml update --force
-	cp glide.lock master.lock
+update:       ##@build Updates dependencies for your go application
+	bash -c "mkubectl.sh --update-deps"
 
-install-deps-featuretest:
-	@echo "$(INFO) Installing dependencies for featuretest environment"
-	cp featuretest.lock glide.lock
-	glide -y featuretest.yaml install
-	cp glide.lock featuretest.lock
+install:      ##@build Install dependencies for your go application
+	bash -c "mkubectl.sh --install-deps"
 
-install-deps-master:
-	@echo "$(INFO) Installing dependencies for $(BLUE)master$(RESET) environment"
-	cp master.lock glide.lock
-	glide -y master.yaml install
-	cp glide.lock master.lock
-
-update-install:
-	@echo "$(INFO) Getting packages and building alpine go binary ..."
-	if [[ "$(CURRENT_BRANCH)" != "master" && "$(CURRENT_BRANCH)" != "featuretest" ]]; then \
-		echo "$(INFO) for branch master "; \
-		make update-deps-master; \
-		make install-deps-master; \
-	else \
-		echo "$(INFO) for branch $(CURRENT_BRANCH) "; \
-		make update-deps-$(CURRENT_BRANCH); \
-		make install-deps-$(CURRENT_BRANCH); \
-	fi
-
-
-build-command:
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./server.go
-
-compile:
-	make update-install
-	make build-command
+build:        ##@compile Builds executable cross compiled for alpine docker
+	bash -c "mkubectl.sh --compile-inside-docker ping"
 
 # ------------------------------------------------------------------------------
+# CircleCI support
+.PHONY: check
 
-#
-# Main (Build binary)
-#
-.PHONY: build-bin
-
-# TODO: Should speed this up with voluming vendor/
-build-bin:              ##@build Cross compile the go binary executable
-	@echo "$(INFO) Building a linux-alpine Go binary locally with a docker container $(BLUE)$(REPO):compile$(RESET)"
-	docker build -t $(REPO):compile -f Dockerfile.build .
-	docker run --rm -v "${PWD}":$(REPO_DIR) $(REPO):compile
-	@echo ""
-
- #
- # Tests
- #
-check:
+check:        ##@circleci Needed for running circleci tests
 	@echo "$(INFO) Running tests"
 	go test -v .
+
+# ------------------------------------------------------------------------------
+# Non docker local development (can be useful for super fast local/debugging)
+#.PHONY: run-conn-local
+
+#run-conn:    ##@dev Run locally (outside docker) (but connect to minikube linkerd etc)
+#	go run ${GO_MAIN} --conn.local
+
+# ------------------------------------------------------------------------------
+# Minikube (Normal Development)
+.PHONY: run swap-hot-local swap-latest swap-latest-release
+
+run:                    ##@dev Alias for swap-hot-local
+	@make swap-hot-local
+
+swap-hot-local:         ##@dev Swaps $(REPO) deployment in minikube with hot-reloadable docker image (You must make sure you are running i.e. infra-minikube.sh --create)
+	@bash -c "mkubectl.sh --hot-reload-deployment ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${GO_PORT}"
+
+swap-latest:            ##@dev Swaps $(REPO) deployment in minikube with the latest image for branch from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
+	@bash -c "mkubectl.sh --swap-deployment-with-latest-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME}"
+
+swap-latest-release:    ##@dev Swaps $(REPO) deployment in minikube with the latest release image for from dockerhub (You must make sure you are running i.e. infra-minikube.sh --create)
+	@bash -c "mkubectl.sh --swap-deployment-with-latest-release-image ${REPO} ${LOCAL_DEPLOYMENT_FILENAME} ${CURRENT_RELEASE_VERSION}"

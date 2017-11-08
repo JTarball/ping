@@ -9,21 +9,46 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/term"
+	"github.com/go-kit/kit/metrics"
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/newtonsystems/grpc_types/go/grpc_types"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-
-	"github.com/newtonsystems/grpc_types/go/grpc_types"
 )
 
 const (
 	grpcPort = ":50000"
-	httpPort = ":8080"
+	httpPort = ":9090"
 )
 
 type Server struct{}
 
+type instrumentingMiddleware struct {
+	pings metrics.Counter
+}
+
 var logger = GetLogger()
+
+var ints = CreateMetrics()
+
+func CreateMetrics() metrics.Counter {
+	var ints metrics.Counter
+	{
+		// Business-level metrics.
+		ints = kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+			Namespace: "monitoring",
+			Subsystem: "ping",
+			Name:      "integers_summed",
+			Help:      "Total count of integers summed via the Sum method.",
+		}, []string{})
+
+	}
+
+	return ints
+}
 
 // GetLogger get logger
 func GetLogger() log.Logger {
@@ -64,7 +89,8 @@ func GetLogger() log.Logger {
 
 // Ping responses with a message back and
 func (s *Server) Ping(ctx context.Context, in *grpc_types.PingRequest) (*grpc_types.PingResponse, error) {
-	logger.Log("level", "info", "method", "Ping", "msg", "Received ping from service: "+in.Message)
+	logger.Log("level", "info", "method", "Ping", "msg", "Received ping from service: "+in.Message, "ints", fmt.Sprintf("%v", ints))
+	ints.Add(1)
 	return &grpc_types.PingResponse{Message: "Hello " + in.Message}, nil
 }
 
@@ -94,6 +120,8 @@ func main() {
 			w.Write([]byte(fmt.Sprintf("error: %v", duration.Seconds())))
 		}
 	})
+
+	http.DefaultServeMux.Handle("/metrics", promhttp.Handler())
 
 	logger.Log("level", "debug", "transport", "http", "port", httpPort, "msg", "running http probe server ...")
 	go http.ListenAndServe(httpPort, nil)
