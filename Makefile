@@ -58,7 +58,7 @@ install:      ##@build Install dependencies for your go application
 	bash -c "mkubectl.sh --install-deps"
 
 build:        ##@compile Builds executable cross compiled for alpine docker
-	bash -c "mkubectl.sh --compile-inside-docker ping"
+	bash -c "mkubectl.sh --compile-inside-docker ${REPO}"
 
 # ------------------------------------------------------------------------------
 # CircleCI support
