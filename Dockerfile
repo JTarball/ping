@@ -16,4 +16,4 @@ ENV PATH $GOPATH/bin:$PATH
 
 COPY main $GOPATH/bin/
 
-ENTRYPOINT ["main"]
+ENTRYPOINT ["ping"]
