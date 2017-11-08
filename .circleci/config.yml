@@ -54,10 +54,10 @@ jobs:
           command: |
             ~/dev-utils/bin/mkubectl.sh --circleci-go-run-tests
 
-      # - run:
-      #     name: Compile Executable & Build & Push to Docker Hub (branch and latest (sync'd to master))
-      #     command: |
-      #       ~/dev-utils/bin/mkubectl.sh --circleci-build-push-to-dockerhub
+      - run:
+          name: Compile Executable & Build & Push to Docker Hub (branch and latest (sync'd to master))
+          command: |
+            ~/dev-utils/bin/mkubectl.sh --circleci-build-push-to-dockerhub
 
       # Upload test results
       - store_test_results:
