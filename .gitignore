@@ -1,4 +1,4 @@
 vendor/
-glide.yaml
-glide.lock
-main
+ping
+Gopkg.toml
+Gopkg.lock
